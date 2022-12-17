@@ -4,3 +4,6 @@
 [submodule "dep/sdl2-cmake-modules"]
 	path = dep/sdl2-cmake-modules
 	url = https://gitlab.com/aminosbh/sdl2-cmake-modules.git
+[submodule "dep/helios_dac"]
+	path = dep/helios_dac
+	url = https://github.com/Grix/helios_dac.git
