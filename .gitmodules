@@ -1,0 +1,6 @@
+[submodule "dep/vecx"]
+	path = dep/vecx
+	url = https://github.com/pmaciel/vecx.git
+[submodule "dep/sdl2-cmake-modules"]
+	path = dep/sdl2-cmake-modules
+	url = https://gitlab.com/aminosbh/sdl2-cmake-modules.git
