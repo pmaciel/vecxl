@@ -16,14 +16,6 @@ find_package(SDL2_gfx REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(libusb REQUIRED libusb-1.0)
 
-# library: vecx
-add_library(vecx SHARED
-    dep/vecx/e6809.c
-    dep/vecx/e8910.c
-    dep/vecx/osint.c
-    dep/vecx/vecx.c)
-target_link_libraries(vecx SDL2::Main SDL2::Image SDL2::GFX)
-
 # library: helios_dac
 add_library(helios_dac SHARED
     dep/helios_dac/sdk/HeliosDacAPI.cpp
@@ -33,8 +25,18 @@ target_compile_options(helios_dac PUBLIC ${libusb_CFLAGS} -Wno-unknown-pragmas -
 target_link_libraries(helios_dac ${libusb_LINK_LIBRARIES})
 
 # executable: vecxl
-add_executable(vecxl src/vecxl.cc)
-target_link_libraries(vecxl vecx helios_dac)
+add_executable(vecxl
+    src/vecxl.cc
+    dep/vecx/e6809.c
+    dep/vecx/e8910.c
+    dep/vecx/vecx.c)
+target_include_directories(vecxl
+    PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/dep/vecx)
+target_link_libraries(vecxl
+    SDL2::Main
+    SDL2::Image
+    SDL2::GFX
+    helios_dac)
 
 # tools
 add_executable(joy tools/joy.cc)

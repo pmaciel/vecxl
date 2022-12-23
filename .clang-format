@@ -6,6 +6,7 @@ AllowShortLoopsOnASingleLine: 'false'
 AlwaysBreakBeforeMultilineStrings: 'true'
 BreakBeforeBraces: Stroustrup
 IndentWidth: '4'
+MaxEmptyLinesToKeep: '2'
 PointerAlignment: Left
 SortIncludes: 'true'
 SortUsingDeclarations: 'false'
