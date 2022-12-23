@@ -1,5 +1,6 @@
 #include <cstdio>
 #include <iostream>
+#include <vector>
 
 #include <SDL.h>
 #include <SDL2_gfxPrimitives.h>
@@ -23,7 +24,7 @@ static long scl_factor;
 static long offx;
 static long offy;
 
-static char* cartfilename = nullptr;
+static const char* cartfilename = nullptr;
 
 
 extern "C" {
@@ -189,6 +190,110 @@ static void readevents()
                 break;
             }
             break;
+        case SDL_JOYAXISMOTION:
+            switch (e.jaxis.axis) {
+            case 5:  // c
+                if (e.jaxis.value > 0) {
+                    snd_regs[14] &= ~0x04;  // x down
+                }
+                else {
+                    snd_regs[14] |= 0x04;  // x up
+                }
+                break;
+            case 4:  // z
+                if (e.jaxis.value > 0) {
+                    snd_regs[14] &= ~0x08;  // y down
+                }
+                else {
+                    snd_regs[14] |= 0x08;  // y up
+                }
+                break;
+            default:
+                break;
+            }
+            break;
+        case SDL_JOYBUTTONDOWN:
+            switch (e.jbutton.button) {
+            case SDL_CONTROLLER_BUTTON_DPAD_UP:
+                alg_jch1 = 0xff;
+                break;
+            case SDL_CONTROLLER_BUTTON_DPAD_DOWN:
+                alg_jch1 = 0x00;
+                break;
+            case SDL_CONTROLLER_BUTTON_DPAD_LEFT:
+                alg_jch0 = 0x00;
+                break;
+            case SDL_CONTROLLER_BUTTON_DPAD_RIGHT:
+                alg_jch0 = 0xff;
+                break;
+            case SDL_CONTROLLER_BUTTON_A:
+                snd_regs[14] &= ~0x01;
+                break;
+            case SDL_CONTROLLER_BUTTON_B:
+                snd_regs[14] &= ~0x02;
+                break;
+            case SDL_CONTROLLER_BUTTON_X:
+                snd_regs[14] &= ~0x04;
+                break;
+            case SDL_CONTROLLER_BUTTON_Y:
+                snd_regs[14] &= ~0x08;
+                break;
+            case SDL_CONTROLLER_BUTTON_BACK:
+            case SDL_CONTROLLER_BUTTON_GUIDE:
+            case SDL_CONTROLLER_BUTTON_START:
+            case SDL_CONTROLLER_BUTTON_LEFTSTICK:
+            case SDL_CONTROLLER_BUTTON_RIGHTSTICK:
+            case SDL_CONTROLLER_BUTTON_LEFTSHOULDER:
+            case SDL_CONTROLLER_BUTTON_RIGHTSHOULDER:
+            case SDL_CONTROLLER_BUTTON_MISC1:
+            case SDL_CONTROLLER_BUTTON_PADDLE1:
+            case SDL_CONTROLLER_BUTTON_PADDLE2:
+            case SDL_CONTROLLER_BUTTON_PADDLE3:
+            case SDL_CONTROLLER_BUTTON_PADDLE4:
+            case SDL_CONTROLLER_BUTTON_TOUCHPAD:
+            case SDL_CONTROLLER_BUTTON_MAX:
+                break;
+            default:
+                break;
+            }
+            break;
+        case SDL_JOYBUTTONUP:
+            switch (e.jbutton.button) {
+            case 11:  // up
+                alg_jch1 = 0x80;
+                break;
+            case 12:  // down
+                alg_jch1 = 0x80;
+                break;
+            case 13:  // left
+                alg_jch0 = 0x80;
+                break;
+            case 14:  // right
+                alg_jch0 = 0x80;
+                break;
+            case 0:  // a
+                snd_regs[14] |= 0x01;
+                break;
+            case 1:  // b
+                snd_regs[14] |= 0x02;
+                break;
+            case 2:  // x
+                snd_regs[14] |= 0x04;
+                break;
+            case 3:  // y
+                snd_regs[14] |= 0x08;
+                break;
+            default:
+                break;
+            }
+            break;
+        case SDL_JOYDEVICEADDED:
+        case SDL_CONTROLLERDEVICEADDED:
+        case SDL_CONTROLLERDEVICEREMAPPED:
+            break;
+        case SDL_JOYDEVICEREMOVED:
+        case SDL_CONTROLLERDEVICEREMOVED:
+            break;
         default:
             break;
         }
@@ -235,9 +340,9 @@ void load_overlay(const char* filename)
 }
 
 
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError()
                   << std::endl;
         exit(-1);
@@ -251,12 +356,30 @@ int main(int argc, char* argv[])
         load_overlay(argv[2]);
     }
 
+    std::vector<SDL_Joystick*> joys;
+    for (int j = 0; j < SDL_NumJoysticks(); ++j) {
+        joys.emplace_back(SDL_JoystickOpen(j));
+        std::cout << "Joystick name: " << SDL_JoystickName(joys.back())
+                  << std::endl;
+    }
+
+    if (joys.empty()) {
+        std::cout << "Joystick not found" << std::endl;
+    }
+
     screen_init(330 * 3 / 2, 410 * 3 / 2);
     init();
     e8910_init_sound();
     osint_emuloop();
     e8910_done_sound();
+
+    for (auto j = joys.rbegin(); j != joys.rend(); ++j) {
+        SDL_JoystickClose(*j);
+    }
+
+    SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
+
     SDL_Quit();
 
     return 0;

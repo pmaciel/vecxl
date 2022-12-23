@@ -11,7 +11,10 @@ int main()
     SDL_Renderer* renderer = nullptr;
     SDL_CreateWindowAndRenderer(320, 240, SDL_WINDOW_SHOWN, &window, &renderer);
 
-    SDL_Joystick* joystick = SDL_JoystickOpen(0);
+    SDL_Joystick* joy = SDL_JoystickOpen(0);
+    if (joy == nullptr) {
+        exit(1);
+    }
 
     std::cout << "Name: " << SDL_JoystickNameForIndex(0) << std::endl;
 
@@ -37,7 +40,7 @@ int main()
         }
     }
 
-    SDL_JoystickClose(joystick);
+    SDL_JoystickClose(joy);
 
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
