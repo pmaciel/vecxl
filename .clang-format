@@ -1,0 +1,18 @@
+﻿---
+AlignConsecutiveAssignments: 'false'
+AlignConsecutiveDeclarations: 'false'
+AllowShortIfStatementsOnASingleLine: Never
+AllowShortLoopsOnASingleLine: 'false'
+AlwaysBreakBeforeMultilineStrings: 'true'
+BreakBeforeBraces: Stroustrup
+IndentWidth: '4'
+PointerAlignment: Left
+SortIncludes: 'true'
+SortUsingDeclarations: 'false'
+SpaceBeforeParens: ControlStatements
+SpaceInEmptyParentheses: 'false'
+SpacesBeforeTrailingComments: '2'
+SpacesInParentheses: 'false'
+UseTab: Never
+
+...

@@ -5,6 +5,8 @@ list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 project(vecxl VERSION 0.0.1 LANGUAGES C CXX)
 
 add_compile_options(-Wall -Wextra -pedantic -Werror)
+set(CMAKE_C_STANDARD 99)
+set(CMAKE_CXX_STANDARD 17)
 
 # requirements
 find_package(SDL2 REQUIRED)
@@ -26,14 +28,20 @@ target_link_libraries(vecx SDL2::Main SDL2::Image SDL2::GFX)
 add_library(helios_dac SHARED
     dep/helios_dac/sdk/HeliosDacAPI.cpp
     dep/helios_dac/sdk/HeliosDac.cpp)
-set_target_properties(helios_dac PROPERTIES
-    CXX_STANDARD 17
-    COMPILE_OPTIONS ${libusb_CFLAGS}
-    LINK_LIBRARIES ${libusb_LINK_LIBRARIES})
+target_include_directories(helios_dac PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/dep/helios_dac/sdk)
+target_compile_options(helios_dac PUBLIC ${libusb_CFLAGS} -Wno-unknown-pragmas -Wno-unused-private-field)
+target_link_libraries(helios_dac ${libusb_LINK_LIBRARIES})
 
 # executable: vecxl
 add_executable(vecxl src/vecxl.cc)
 target_link_libraries(vecxl vecx helios_dac)
+
+# tools
+add_executable(joy tools/joy.cc)
+target_link_libraries(joy SDL2::Main)
+
+add_executable(hel tools/hel.cc)
+target_link_libraries(hel helios_dac)
 
 # data
 foreach(rom fastrom.dat rom.dat)
