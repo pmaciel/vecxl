@@ -1,6 +1,9 @@
 #include <cstdio>
 #include <iostream>
+#include <string>
 #include <vector>
+
+#include "cxxopts.h"
 
 #include <SDL.h>
 #include <SDL2_gfxPrimitives.h>
@@ -327,33 +330,87 @@ void osint_emuloop()
 }
 
 
-void load_overlay(const char* filename)
-{
-    SDL_Surface* image = IMG_Load(filename);
-    if (image != nullptr) {
-        overlay_orginal_surface = image;
-        std::cout << "Loaded overlay image from file=" << filename << std::endl;
+struct Options {
+    Options(int argc, const char* argv[])
+    {
+        try {
+            std::unique_ptr<cxxopts::Options> opt(
+                new cxxopts::Options(argv[0]));
+            opt->set_width(70).set_tab_expansion();
+
+            opt->positional_help("FILE (default: 'rom.dat')")
+                .show_positional_help();
+
+            opt->add_options()(
+                "input", "Input file",
+                cxxopts::value<std::string>(input)->default_value("rom.dat"));
+            opt->parse_positional("input");
+
+            opt->add_options()("h, help", "Print help")(
+                "v, video", "Video",
+                cxxopts::value<std::string>(video)->default_value("video-sdl"))(
+                "s, sound", "Sound",
+                cxxopts::value<std::string>(sound)->default_value("sound-sdl"))(
+                "e, engine", "Engine",
+                cxxopts::value<std::string>(engine)->default_value("vecx"))(
+                "j, joystick", "Joystick",
+                cxxopts::value<std::string>(joystick)->default_value(
+                    "joystick-sdl"));
+
+            opt->add_options()("o, video-sdl-overlay",
+                               "Video overlay (Vectrex)",
+                               cxxopts::value<std::string>(videoOverlay));
+
+            auto result = opt->parse(argc, argv);
+
+            if (result.count("help") > 0) {
+                std::cout << opt->help() << std::endl;
+                exit(0);
+            }
+
+            if (result.count("input") == 0) {
+                input = result["input"].as<std::string>();
+            }
+        }
+        catch (const cxxopts::exceptions::exception& e) {
+            std::cout << "error parsing options: " << e.what() << std::endl;
+            exit(-1);
+        }
     }
-    else {
-        std::cerr << "IMG_Load: " << IMG_GetError() << std::endl;
-    }
-}
+
+    std::string video;
+    std::string sound;
+    std::string engine;
+    std::string joystick;
+
+    std::string input;
+    std::string videoOverlay;
+};
+
+
+// struct Component {
+//     void listen();
+// };
 
 
 int main(int argc, const char* argv[])
 {
+    Options options(argc, argv);
+
+    cartfilename = options.input.c_str();
+
+    if (!options.videoOverlay.empty()) {
+        overlay_orginal_surface = IMG_Load(options.videoOverlay.c_str());
+        if (overlay_orginal_surface == nullptr) {
+            std::cerr << "IMG_Load: " << IMG_GetError() << std::endl;
+            exit(-1);
+        }
+    }
+
     if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_AUDIO | SDL_INIT_JOYSTICK) < 0) {
         std::cerr << "Failed to initialize SDL: " << SDL_GetError()
                   << std::endl;
         exit(-1);
-    }
-
-    if (argc > 1) {
-        cartfilename = argv[1];
-    }
-
-    if (argc > 2) {
-        load_overlay(argv[2]);
     }
 
     std::vector<SDL_Joystick*> joys;
